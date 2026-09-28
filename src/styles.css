@@ -2,7 +2,7 @@
    reference and the asset dictionary these classes belong to.
    Palette is ANU's brand set: black/white carry the page, gold tint is the
    only background tone, and ANU gold is a highlight used sparingly (nav
-   accents, status dots, focus) — never as a fill covering more than a small
+   accents, the selected day, focus) — never as a fill covering more than a small
    fraction of any view. */
 :root {
   --colour-black: #000000;
@@ -18,6 +18,7 @@
   --colour-busy-bg: #f3e2de;
   --colour-closed: #5a5a5a;
   --colour-closed-bg: #ececec;
+  --colour-past-bg: #dcdcdc;
 
   --radius: 0.5rem;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -74,40 +75,6 @@ a:hover {
 .site-nav .brand {
   font-weight: 700;
   color: var(--colour-gold);
-}
-
-/* Status badge — used on room cards and the map legend. */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.badge::before {
-  content: "";
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.badge-available {
-  color: var(--colour-available);
-  background: var(--colour-available-bg);
-}
-
-.badge-busy {
-  color: var(--colour-busy);
-  background: var(--colour-busy-bg);
-}
-
-.badge-closed {
-  color: var(--colour-closed);
-  background: var(--colour-closed-bg);
 }
 
 /* Card — used for room listings. Gold tint gives the surface a wash without
@@ -302,102 +269,7 @@ button:hover {
   padding-inline-start: 1.2rem;
 }
 
-/* Building layout — room list beside the booking panel on wide viewports,
-   stacked below it on narrow ones (matches main's 60rem breakpoint). */
-.building-layout {
-  display: grid;
-  grid-template-columns: 1fr 20rem;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-@media (max-width: 60rem) {
-  .building-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Booking panel — sticky card alongside the room list. */
-.booking-panel {
-  background: var(--colour-white);
-  border: 1px solid var(--colour-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
-  padding: 1rem;
-}
-
-@media (min-width: 60.01rem) {
-  .booking-panel {
-    position: sticky;
-    top: 1rem;
-  }
-}
-
-/* Booking filters — compact date/time/status controls above the live list. */
-.booking-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-block: 0 1rem;
-}
-
-.booking-filters label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.8rem;
-  color: var(--colour-unigrey);
-}
-
-.booking-filters input,
-.booking-filters select {
-  min-width: 0;
-  padding: 0.35rem 0.5rem;
-  font: inherit;
-  font-size: 0.9rem;
-  border: 1px solid var(--colour-border);
-  border-radius: var(--radius);
-}
-
-/* Live room list inside the panel — reuses .card-list/.card spacing, just
-   tighter since it lives in a narrower column. */
-.room-list-live {
-  gap: 0.5rem;
-}
-
-.room-list-live .card {
-  padding: 0.6rem 0.75rem;
-}
-
-/* Book affordance on room cards — small gold-accented link/button. */
-.book-link {
-  display: inline-block;
-  padding: 0.25rem 0.7rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--colour-black);
-  background: var(--colour-gold-tint);
-  border: 1px solid var(--colour-gold);
-  border-radius: var(--radius);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.book-link:hover {
-  background: var(--colour-gold);
-  color: var(--colour-black);
-}
-
-.book-link[aria-disabled="true"],
-.book-link.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-  border-color: var(--colour-border);
-  background: var(--colour-closed-bg);
-  color: var(--colour-closed);
-}
-
-/* Booking form — appears once a room is picked from the panel. */
+/* Booking form: appears once a free slot is picked in the calendar. */
 .booking-form {
   margin-top: 1rem;
   padding: 0.75rem;
@@ -426,4 +298,265 @@ button:hover {
 .booking-feedback.error {
   color: var(--colour-busy);
   background: var(--colour-busy-bg);
+}
+
+/* The live region is always in the page so screen readers announce updates;
+   collapse it while it has nothing to say. */
+.booking-feedback:empty {
+  margin: 0;
+  padding: 0;
+}
+
+.booking-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.booking-form select {
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+}
+
+.booking-summary {
+  flex-basis: 100%;
+  margin: 0;
+  font-weight: 600;
+  color: var(--colour-black);
+}
+
+/* Text only screen readers get: half-hour column headers, cell states. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Day strip: 14 day links plus previous/next. Wraps so it never widens the
+   page; the selected day is the one place gold fills a control. */
+.day-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 1rem;
+  font-size: 0.85rem;
+}
+
+.day-strip ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day-link {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.day-link[aria-current="date"] {
+  background: var(--colour-gold);
+  border-color: var(--colour-gold);
+  color: var(--colour-black);
+  font-weight: 600;
+}
+
+.day-step {
+  white-space: nowrap;
+}
+
+/* Legend: every state is named in text, never colour alone. */
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.calendar-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid var(--colour-border);
+}
+
+/* Day grid: rooms down, 30-minute slots across. Only the wrapper scrolls
+   sideways; the room column stays put while it does. */
+.calendar-wrap {
+  position: relative;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+}
+
+.calendar {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8rem;
+}
+
+.calendar caption {
+  padding: 0.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--colour-black);
+}
+
+.calendar th[scope="row"],
+.calendar thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 11rem;
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+  background: var(--colour-white);
+  border-right: 1px solid var(--colour-border);
+}
+
+.room-name {
+  display: block;
+  font-weight: 600;
+  color: var(--colour-black);
+  white-space: nowrap;
+}
+
+.room-meta {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+/* Hour labels sit over the hour's first column and spill into the
+   half-hour column beside it. */
+.slot-head {
+  position: relative;
+  width: 2rem;
+  min-width: 2rem;
+  height: 1.6rem;
+  padding: 0;
+}
+
+.slot-hour {
+  position: absolute;
+  left: 0.15rem;
+  bottom: 0.2rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.slot {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2.4rem;
+  padding: 0;
+  border-left: 1px solid var(--colour-white);
+  border-bottom: 1px solid var(--colour-white);
+}
+
+.slot-free {
+  background: var(--colour-available-bg);
+}
+
+.slot-free a {
+  display: block;
+  width: 100%;
+  height: 2.4rem;
+}
+
+.slot-free a:hover,
+.slot-free a:focus-visible,
+.slot-selected a {
+  outline: 3px solid var(--colour-gold);
+  outline-offset: -3px;
+}
+
+/* The four cell states have to read apart at a glance (and in the legend,
+   which reuses these classes): free is pale green, booked a red hatch, past
+   a flat mid grey, closed a darker grey. */
+.slot-booked {
+  background: repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--colour-busy) 55%, transparent) 0 3px,
+      transparent 3px 7px
+    ),
+    var(--colour-busy-bg);
+}
+
+.slot-closed {
+  background: color-mix(in srgb, var(--colour-closed) 45%, var(--colour-closed-bg));
+}
+
+.slot-past {
+  background: var(--colour-past-bg);
+}
+
+/* Only shown on narrow screens, where most of the day is off to the right. */
+.calendar-hint {
+  display: none;
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+}
+
+/* Every free cell is a tab stop, so keyboard users get a way past the grid.
+   Hidden until it has focus. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+}
+
+.skip-link:focus {
+  position: static;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  background: var(--colour-black);
+  color: var(--colour-white);
+  border-radius: var(--radius);
+  outline: 3px solid var(--colour-gold);
+}
+
+@media (max-width: 40rem) {
+  .calendar-hint {
+    display: block;
+  }
+
+  /* A narrower room column leaves more of the day on screen. */
+  .calendar th[scope="row"],
+  .calendar thead th:first-child {
+    min-width: 7rem;
+    max-width: 7rem;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.75rem;
+  }
+
+  .room-name {
+    white-space: normal;
+  }
 }

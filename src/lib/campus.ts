@@ -22,27 +22,51 @@ export interface Building {
   rooms: Room[];
 }
 
+// Bookable hours and rules shared by the calendar grid and the booking API.
+// The two-week window and 30-minute slots follow the Library's public
+// booking pages; the opening hours are a prototype constant.
+export const OPEN = "08:00";
+export const CLOSE = "22:00";
+export const SLOT_MINUTES = 30;
+export const BOOKING_WINDOW_DAYS = 14;
+
+// Builds a room list from room numbers like "3.04": id "<prefix>-3-04",
+// name "<label> 3.04", note "Level 3". Capacity isn't published anywhere,
+// so callers pass a placeholder.
+function numberedRooms(prefix: string, label: string, capacity: number, numbers: string[]): Room[] {
+  return numbers.map((n): Room => ({
+    id: `${prefix}-${n.replace(".", "-")}`,
+    name: `${label} ${n}`,
+    capacity,
+    status: "available",
+    note: `Level ${n.split(".")[0]}`,
+  }));
+}
+
 export const BUILDINGS: Building[] = [
   {
     id: "chifley",
     code: "Bldg 15",
     name: "Chifley Library",
     lngLat: [149.1203952, -35.2779988],
-    rooms: [
-      { id: "chifley-101", name: "Silent Study 101", capacity: 40, status: "available", note: "Open until 22:00" },
-      { id: "chifley-b2", name: "Group Room B2", capacity: 8, status: "busy", note: "Booked until 15:00" },
-      { id: "chifley-b3", name: "Group Room B3", capacity: 8, status: "available", note: "Free now" },
-    ],
+    // Names from the Library's group study room door signage. The Library
+    // says Chifley has 15 bookable group rooms, but only these 10 names are
+    // publicly verifiable (LibCal needs an ANU login). Capacity 6 is a
+    // placeholder.
+    rooms: numberedRooms("chifley", "Group Study Room", 6, [
+      "3.04", "3.05", "3.06", "3.07", "3.19", "4.02", "4.05", "4.06", "4.07", "4.17",
+    ]),
   },
   {
     id: "hancock",
     code: "Bldg 43",
     name: "Hancock Library",
     lngLat: [149.1177754, -35.2769518],
-    rooms: [
-      { id: "hancock-201", name: "Reading Room 201", capacity: 60, status: "available", note: "Open now" },
-      { id: "hancock-tut1", name: "Tutorial Room 1", capacity: 20, status: "closed", note: "Closed for maintenance" },
-    ],
+    // From the Library's door signage, all on Level 3. Capacity 6 is a
+    // placeholder.
+    rooms: numberedRooms("hancock", "Group Study Room", 6, [
+      "3.27", "3.28", "3.29", "3.33", "3.34", "3.36", "3.37", "3.38", "3.39",
+    ]),
   },
   {
     id: "csit",
@@ -77,11 +101,10 @@ export const BUILDINGS: Building[] = [
     code: "Bldg 155",
     name: "Marie Reay Teaching Centre",
     lngLat: [149.1209577, -35.2776794],
-    rooms: [
-      { id: "mrtc-1", name: "Active Learning Room 1", capacity: 50, status: "available", note: "Free now" },
-      { id: "mrtc-2", name: "Active Learning Room 2", capacity: 50, status: "busy", note: "Class until 16:00" },
-      { id: "mrtc-3", name: "Seminar Room 3", capacity: 20, status: "available", note: "Free now" },
-    ],
+    // Capacity 30 is a placeholder.
+    rooms: numberedRooms("marie-reay", "Room", 30, [
+      "2.01", "2.02", "2.03", "2.04", "3.01", "3.02", "3.03", "3.04", "4.01", "4.02", "4.03", "4.04",
+    ]),
   },
   {
     id: "copland",

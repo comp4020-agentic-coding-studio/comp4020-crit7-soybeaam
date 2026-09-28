@@ -24,14 +24,35 @@ const loadHome = async () => {
   return { doc, markers };
 };
 
-const canberraToday = () => {
+const canberraNow = () => {
   const p = Object.fromEntries(
-    new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Sydney", year: "numeric", month: "2-digit", day: "2-digit" })
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Australia/Sydney",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
       .formatToParts(new Date())
       .map((x) => [x.type, x.value]),
   );
-  return `${p.year}-${p.month}-${p.day}`;
+  return { date: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour), minute: Number(p.minute) };
 };
+
+// The 30-minute slot containing "now", e.g. 14:17 -> 14:00-14:30.
+const pad = (n: number) => String(n).padStart(2, "0");
+const currentSlot = (now: ReturnType<typeof canberraNow>) => {
+  const startMin = now.hour * 60 + (now.minute < 30 ? 0 : 30);
+  const endMin = startMin + 30;
+  return {
+    start: `${pad(Math.floor(startMin / 60))}:${pad(startMin % 60)}`,
+    end: `${pad(Math.floor(endMin / 60))}:${pad(endMin % 60)}`,
+  };
+};
+
+const NOW = canberraNow();
 
 describe("campus map", () => {
   it("has a marker for Chifley, Hancock and Marie Reay, each with a building page", async () => {
@@ -64,18 +85,20 @@ describe("campus map", () => {
     }
   });
 
-  it("drops a building's available count when one of its rooms is booked now", async () => {
+  // Rooms can only be booked 08:00-22:00 Canberra time, so outside those
+  // hours there is no slot containing "now" to book and the claim can't be
+  // exercised. The API's rules are still covered at any hour by booking.test.ts.
+  it.skipIf(NOW.hour < 8 || NOW.hour >= 22)("drops a building's available count when one of its rooms is booked now", async () => {
     const before = (await loadHome()).markers.find((m) => m.id === "chifley")!;
     const res = await fetch(new URL("/api/bookings", baseUrl), {
       method: "POST",
       headers: { origin: baseUrl, "content-type": "application/json" },
       body: JSON.stringify({
-        roomId: "chifley-101",
+        roomId: "chifley-3-04",
         buildingId: "chifley",
         bookedBy: "map spec probe",
-        date: canberraToday(),
-        start: "00:00",
-        end: "24:00",
+        date: NOW.date,
+        ...currentSlot(NOW),
       }),
     });
     expect(res.status).toBe(200);

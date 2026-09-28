@@ -1,0 +1,30 @@
+---
+import Layout from "../../components/Layout.astro";
+import BookingPanel from "../../components/BookingPanel.astro";
+import { getBuilding } from "../../lib/campus";
+import { canberraNow } from "../../lib/bookings";
+
+const { id } = Astro.params;
+const building = getBuilding(id!);
+
+if (!building) {
+  return Astro.redirect("/");
+}
+
+const now = canberraNow();
+const date = Astro.url.searchParams.get("date") || now.date;
+const time = Astro.url.searchParams.get("time") || now.time;
+const error = Astro.url.searchParams.get("error");
+---
+
+<Layout title={`${building.name} — ANU Room Finder`}>
+  <a class="back-link" href="/">&larr; Back to campus map</a>
+  <h1>{building.name}</h1>
+  <p class="card-meta">{building.code}</p>
+
+  {error && <div class="booking-feedback error">{error}</div>}
+
+  <div class="building-layout">
+    <BookingPanel building={building} date={date} time={time} />
+  </div>
+</Layout>

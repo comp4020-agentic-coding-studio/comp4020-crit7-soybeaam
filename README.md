@@ -1,18 +1,48 @@
 # Your prototype
 
-<!-- TEMPLATE: this file is yours, and the deployed app publishes it in full at
-     /readme/ --- a visitor reads it before they touch the app, and so does the
-     marker. Replace everything in it, this comment included. -->
-
-What this is, in a paragraph: the thing, and what it's for.
+This is a room-booking prototype for the ANU campus. A static SVG campus map
+(`src/pages/index.astro`) shows a handful of buildings; clicking one opens its
+building page (`src/pages/building/[id].astro`), which lists that building's
+rooms from `src/lib/campus.ts` alongside a live availability status —
+available, busy, or closed — computed against a SQLite `bookings` table
+(`src/lib/schema.ts`, `src/lib/bookings.ts`). Visitors can filter the room
+list by date, time, and status, and book any available room through a
+right-hand booking panel (`src/components/BookingPanel.astro`).
 
 ## What good looks like here
 
-Say what good means for this app: what you decided, what you read or looked at
-while deciding, and what you chose not to build. The rules that decision
-produced live in `CLAUDE.md` and the checks that protect it live in `spec/`;
-this is the argument they came from, so say which parts of good are enforced and
-which are judgement calls.
+We read the brief around a lightweight, no-account booking flow for shared
+teaching spaces, and looked at how the starter already separated static
+campus data (`campus.ts`) from live booking state (`schema.ts`/`bookings.ts`)
+before deciding how far to take it. The core decision was to keep "room data"
+and "booking data" separate: buildings, rooms, and their base status
+(available/closed) are fixed data describing the campus, while bookings are
+the only thing that changes a room's live status to busy. `roomStatusFor` in
+`src/lib/bookings.ts` is the single place that merges the two, so the map,
+the building page, and the booking panel all agree on what "available" means
+at a given date and time.
 
-Images go in `public/` and are linked relatively --- `![alt](public/before.png)`
---- which renders on GitHub and at `/readme/` alike.
+We chose to make the booking panel work both with and without JavaScript:
+with JS it submits via `fetch` and updates the room list in place; without
+JS, the same form posts to `src/pages/api/bookings.ts`, which does the same
+validation and redirects back with a 303 so the page reflects the new
+booking on reload. Rejecting overlapping bookings is enforced entirely
+server-side in `isOverlapping`/`createBooking`, so a double-booking is
+impossible to force through the UI, a stale page, or a replayed request —
+this was a judgement call to put trust only in the server, not the client.
+
+What we chose not to build: user accounts or authentication (bookings are
+attributed to a free-text name), recurring bookings, editing or cancelling
+an existing booking, and a real campus data feed — the building and room
+list in `campus.ts` is static seed data rather than pulled from a live
+source, which is called out in that file's own comment.
+
+Some of this is enforced by `spec/`: `spec/routes.ts` lists every page the
+invariants run against (so a route without a matching entry isn't checked at
+all), and `spec/readme.test.ts` checks that this file is rendered in full at
+`/readme/`. Other checks assert on route status codes and basic page
+structure. What isn't spec-enforced, and was a judgement call instead, is the
+UI/UX split above: which parts of the booking flow live client-side for a
+snappier experience versus what must be re-validated on the server, and how
+much of the campus map is worth modelling versus stubbing as static data for
+this prototype.

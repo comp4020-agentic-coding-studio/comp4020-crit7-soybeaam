@@ -1,18 +1,269 @@
+/* Colour palette and shared primitives — see WEBSITE.md for the swatch
+   reference and the asset dictionary these classes belong to.
+   Palette is ANU's brand set: black/white carry the page, gold tint is the
+   only background tone, and ANU gold is a highlight used sparingly (nav
+   accents, status dots, focus) — never as a fill covering more than a small
+   fraction of any view. */
+:root {
+  --colour-black: #000000;
+  --colour-white: #ffffff;
+  --colour-gold: #be830e;
+  --colour-gold-tint: #f5edde;
+  --colour-unigrey: #333333;
+  --colour-border: #d9d3c4;
+
+  --colour-available: #1e6b3d;
+  --colour-available-bg: #e3f0e6;
+  --colour-busy: #a13324;
+  --colour-busy-bg: #f3e2de;
+  --colour-closed: #5a5a5a;
+  --colour-closed-bg: #ececec;
+
+  --radius: 0.5rem;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  padding: 2rem;
+  padding: 0;
   font-family: system-ui, sans-serif;
   line-height: 1.6;
-  color: #1a1a1a;
+  color: var(--colour-unigrey);
+  background: var(--colour-white);
 }
 
 main {
-  max-width: 40rem;
+  max-width: 60rem;
   margin: 0 auto;
+  padding: 1.5rem;
 }
 
 a {
-  color: #0b5fff;
+  color: var(--colour-black);
+}
+
+a:hover {
+  color: var(--colour-gold);
+}
+
+/* Nav bar — reused on every page. Black bar, gold used only for the active
+   accent underline, keeping gold's footprint small. */
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--colour-black);
+  border-bottom: 3px solid var(--colour-gold);
+}
+
+.site-nav a {
+  color: var(--colour-white);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.site-nav a:hover {
+  color: var(--colour-gold);
+}
+
+.site-nav .brand {
+  font-weight: 700;
+  color: var(--colour-gold);
+}
+
+/* Status badge — used on room cards and the map legend. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-available {
+  color: var(--colour-available);
+  background: var(--colour-available-bg);
+}
+
+.badge-busy {
+  color: var(--colour-busy);
+  background: var(--colour-busy-bg);
+}
+
+.badge-closed {
+  color: var(--colour-closed);
+  background: var(--colour-closed-bg);
+}
+
+/* Card — used for room listings. Gold tint gives the surface a wash without
+   using gold itself as a fill. */
+.card {
+  background: var(--colour-gold-tint);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+}
+
+.card-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.card-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-title {
+  font-weight: 600;
+  color: var(--colour-black);
+}
+
+.card-meta {
+  font-size: 0.85rem;
+  color: var(--colour-unigrey);
+}
+
+/* Campus map — MapLibre over self-hosted OSM tiles (public/maps/anu.pmtiles). */
+.campus-map {
+  width: 100%;
+  height: 28rem;
+  background: var(--colour-gold-tint);
+  border-radius: var(--radius);
+  border: 1px solid var(--colour-border);
+  overflow: hidden;
+}
+
+@media (max-width: 40rem) {
+  .campus-map {
+    height: 20rem;
+  }
+}
+
+/* Building marker. MapLibre positions .map-marker with an inline transform,
+   so never set transform on it; the hover lift lives on .marker-pin. */
+.map-marker {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+  text-decoration: none;
+  color: var(--colour-unigrey);
+}
+
+.map-marker:hover,
+.map-marker:focus-visible {
+  z-index: 10;
+  outline: none;
+}
+
+.marker-pin {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50% 50% 50% 0;
+  background: var(--colour-black);
+  border: 3px solid var(--colour-gold);
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.map-marker:hover .marker-pin,
+.map-marker:focus-visible .marker-pin {
+  transform: rotate(-45deg) scale(1.2);
+}
+
+.map-marker:focus-visible .marker-pin {
+  outline: 3px solid var(--colour-black);
+  outline-offset: 3px;
+}
+
+/* Hover card — opens above the pin, or below it near the map's top edge. */
+.marker-card {
+  position: absolute;
+  bottom: calc(100% + 0.6rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12rem;
+  display: none;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0 0 0.6rem;
+  background: var(--colour-white);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.map-marker.card-below .marker-card {
+  bottom: auto;
+  top: calc(100% + 0.6rem);
+}
+
+.map-marker:hover .marker-card,
+.map-marker:focus-visible .marker-card {
+  display: flex;
+}
+
+.marker-card-image {
+  display: block;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 0.4rem;
+  background:
+    linear-gradient(135deg, transparent 48%, var(--colour-border) 49%, var(--colour-border) 51%, transparent 52%),
+    var(--colour-gold-tint);
+}
+
+.marker-card-name {
+  padding-inline: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--colour-black);
+}
+
+.marker-card-meta {
+  padding-inline: 0.7rem;
+  font-size: 0.8rem;
+  color: var(--colour-available);
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--colour-unigrey);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--colour-black);
 }
 
 form {
@@ -28,13 +279,151 @@ input {
   min-width: 12rem;
   padding: 0.4rem 0.6rem;
   font: inherit;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
 }
 
 button {
   padding: 0.4rem 1rem;
   font: inherit;
+  background: var(--colour-black);
+  color: var(--colour-white);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--colour-gold);
+  color: var(--colour-black);
 }
 
 #messages {
   padding-inline-start: 1.2rem;
+}
+
+/* Building layout — room list beside the booking panel on wide viewports,
+   stacked below it on narrow ones (matches main's 60rem breakpoint). */
+.building-layout {
+  display: grid;
+  grid-template-columns: 1fr 20rem;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 60rem) {
+  .building-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Booking panel — sticky card alongside the room list. */
+.booking-panel {
+  background: var(--colour-white);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+}
+
+@media (min-width: 60.01rem) {
+  .booking-panel {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+/* Booking filters — compact date/time/status controls above the live list. */
+.booking-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-block: 0 1rem;
+}
+
+.booking-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--colour-unigrey);
+}
+
+.booking-filters input,
+.booking-filters select {
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+  font-size: 0.9rem;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+}
+
+/* Live room list inside the panel — reuses .card-list/.card spacing, just
+   tighter since it lives in a narrower column. */
+.room-list-live {
+  gap: 0.5rem;
+}
+
+.room-list-live .card {
+  padding: 0.6rem 0.75rem;
+}
+
+/* Book affordance on room cards — small gold-accented link/button. */
+.book-link {
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--colour-black);
+  background: var(--colour-gold-tint);
+  border: 1px solid var(--colour-gold);
+  border-radius: var(--radius);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.book-link:hover {
+  background: var(--colour-gold);
+  color: var(--colour-black);
+}
+
+.book-link[aria-disabled="true"],
+.book-link.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  border-color: var(--colour-border);
+  background: var(--colour-closed-bg);
+  color: var(--colour-closed);
+}
+
+/* Booking form — appears once a room is picked from the panel. */
+.booking-form {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+  background: var(--colour-gold-tint);
+}
+
+.booking-form[hidden] {
+  display: none;
+}
+
+/* Inline feedback after a booking attempt. */
+.booking-feedback {
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+
+.booking-feedback.success {
+  color: var(--colour-available);
+  background: var(--colour-available-bg);
+}
+
+.booking-feedback.error {
+  color: var(--colour-busy);
+  background: var(--colour-busy-bg);
 }

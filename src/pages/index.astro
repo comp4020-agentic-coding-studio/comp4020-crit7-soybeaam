@@ -1,53 +1,132 @@
 ---
-import { listMessages } from "../lib/db";
-import "../styles.css";
+import Layout from "../components/Layout.astro";
+import { BUILDINGS } from "../lib/campus";
+import { canberraNow, roomStatusFor } from "../lib/bookings";
 
-const messages = listMessages();
+const now = canberraNow();
+const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => ({
+  id: b.id,
+  name: b.name,
+  code: b.code,
+  lngLat: b.lngLat!,
+  total: b.rooms.length,
+  available: b.rooms.filter((r) => roomStatusFor(r, now.date, now.time) === "available").length,
+}));
 ---
 
-<!doctype html>
-<html lang="en-AU">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>COMP4020 prototype</title>
-  </head>
-  <body>
-    <nav aria-label="site">
-      <a href="/">Guestbook</a>
-      <a href="/readme/">About</a>
-    </nav>
-    <main>
-      <h1>Guestbook</h1>
-      <p>
-        A minimal full-stack starter: messages live in SQLite on the machine's
-        volume (state survives a reload and a redeploy), and new messages
-        appear in every open tab over a server-sent-events stream — open this
-        page twice and sign it in one. Replace all of this with your own
-        prototype.
-      </p>
-      <form method="post" action="/api/messages">
-        <label for="body">Leave a message</label>
-        <input id="body" name="body" required maxlength="500" />
-        <button>Sign</button>
-      </form>
-      <ul id="messages">
-        {messages.map((message) => <li>{message.body}</li>)}
-      </ul>
-    </main>
-    <script>
-      // The live half of the demo: subscribe to the SSE stream and prepend
-      // messages as they arrive. The form itself needs none of this — its
-      // POST + redirect re-renders the submitting tab from SQLite; this
-      // stream is how every other tab finds out.
-      const list = document.querySelector("#messages");
-      const source = new EventSource("/api/events");
-      source.addEventListener("message", (event) => {
-        const message = JSON.parse(event.data);
-        const item = document.createElement("li");
-        item.textContent = message.body;
-        list?.prepend(item);
-      });
-    </script>
-  </body>
-</html>
+<Layout title="ANU Room Finder — Campus map">
+  <h1>Find a study or tutorial room</h1>
+  <p>
+    Hover a building on the map to see how many rooms are free right now, and
+    click it to view and book its rooms.
+  </p>
+
+  <div
+    id="campus-map"
+    class="campus-map"
+    role="region"
+    aria-label="Map of ANU campus with building markers"
+    data-markers={JSON.stringify(markers)}
+  >
+  </div>
+
+  <div class="map-legend">
+    <span>Hover a marker for availability, click to view its rooms</span>
+  </div>
+
+  <ul class="card-list" style="margin-top: 2rem;">
+    {
+      BUILDINGS.map((b) => (
+        <li class="card">
+          <div>
+            <div class="card-title">{b.name}</div>
+            <div class="card-meta">{b.code} &middot; {b.rooms.length} rooms listed</div>
+          </div>
+          <a href={`/building/${b.id}/`}>View rooms &rarr;</a>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>
+
+<script>
+  import * as maplibregl from "maplibre-gl";
+  import "maplibre-gl/dist/maplibre-gl.css";
+  // Bundling moves MapLibre away from its sibling worker file, so hand it
+  // Vite's bundled worker URL explicitly.
+  import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+  import { Protocol } from "pmtiles";
+  import { campusStyle } from "../lib/map-style";
+
+  interface MarkerData {
+    id: string;
+    name: string;
+    code: string;
+    lngLat: [number, number];
+    total: number;
+    available: number;
+  }
+
+  const container = document.getElementById("campus-map");
+  if (container) {
+    const markers: MarkerData[] = JSON.parse(container.dataset.markers ?? "[]");
+
+    maplibregl.setWorkerUrl(workerUrl);
+    maplibregl.addProtocol("pmtiles", new Protocol().tile);
+
+    const map = new maplibregl.Map({
+      container,
+      style: campusStyle,
+      center: [149.1194, -35.2776],
+      zoom: 16.3,
+      minZoom: 15,
+      maxZoom: 18.5,
+      maxBounds: [
+        [149.106, -35.289],
+        [149.132, -35.268],
+      ],
+      attributionControl: { compact: true },
+      dragRotate: false,
+      pitchWithRotate: false,
+    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    map.touchZoomRotate.disableRotation();
+
+    const el = (tag: string, className: string, text?: string) => {
+      const node = document.createElement(tag);
+      node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    };
+
+    const placed = markers.map((m) => {
+      const link = document.createElement("a");
+      link.className = "map-marker";
+      link.href = `/building/${m.id}/`;
+      link.setAttribute("aria-label", `${m.name}, ${m.available} of ${m.total} rooms available. View rooms`);
+
+      const card = el("span", "marker-card");
+      card.setAttribute("aria-hidden", "true");
+      card.append(
+        el("span", "marker-card-image"),
+        el("span", "marker-card-name", m.name),
+        el("span", "marker-card-meta", `${m.available} of ${m.total} rooms available`),
+      );
+      link.append(el("span", "marker-pin"), card);
+
+      new maplibregl.Marker({ element: link, anchor: "bottom" }).setLngLat(m.lngLat).addTo(map);
+      return { link, lngLat: m.lngLat };
+    });
+
+    // Cards open upward; flip them below the pin near the top edge so the
+    // map's overflow clipping doesn't cut them off.
+    const flipCards = () => {
+      const limit = container.clientHeight / 3;
+      for (const p of placed) {
+        p.link.classList.toggle("card-below", map.project(p.lngLat).y < limit);
+      }
+    };
+    map.on("load", flipCards);
+    map.on("move", flipCards);
+  }
+</script>

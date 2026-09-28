@@ -1,0 +1,28 @@
+---
+// Reusable room row. Usage: <RoomCard room={room} />
+import type { Room } from "../lib/campus";
+import StatusBadge from "./StatusBadge.astro";
+
+interface Props {
+  room: Room;
+  bookHref?: string;
+}
+
+const { room, bookHref = `#book-${room.id}` } = Astro.props;
+const closed = room.status === "closed";
+---
+
+<li class="card">
+  <div>
+    <div class="card-title">{room.name}</div>
+    <div class="card-meta">Capacity {room.capacity} &middot; {room.note}</div>
+  </div>
+  <div>
+    <StatusBadge status={room.status} />
+    {closed ? (
+      <a class="book-link disabled" href="#" aria-disabled="true" tabindex="-1">Book</a>
+    ) : (
+      <a class="book-link" href={bookHref}>Book</a>
+    )}
+  </div>
+</li>

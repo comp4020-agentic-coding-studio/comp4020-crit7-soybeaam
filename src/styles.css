@@ -327,6 +327,15 @@ button:hover {
 }
 
 /* Inline feedback after a booking attempt. */
+.building-floorplan {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.5rem auto 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--colour-border, #ddd);
+}
+
 .booking-feedback {
   margin-top: 0.6rem;
   padding: 0.5rem 0.7rem;

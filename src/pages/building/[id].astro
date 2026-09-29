@@ -40,4 +40,8 @@ const booked = {
   {error && <div class="booking-feedback error">{error}</div>}
 
   <AvailabilityCalendar building={building} date={date} selectedRoomId={room} selectedStart={start} booked={booked} />
+
+  {building.floorplan && (
+    <img class="building-floorplan" src={building.floorplan} alt={`${building.name} floor plan`} />
+  )}
 </Layout>

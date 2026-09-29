@@ -21,6 +21,9 @@ export interface Building {
   lngLat?: [number, number];
   // Path under public/ for the marker hover card photo; optional.
   image?: string;
+  // Path under public/ for a floor plan image shown on the booking page;
+  // only the Library buildings have a public one.
+  floorplan?: string;
   rooms: Room[];
 }
 
@@ -52,6 +55,7 @@ export const BUILDINGS: Building[] = [
     name: "Chifley Library",
     lngLat: [149.1203952, -35.2779988],
     image: "/img/chifley.jpg",
+    floorplan: "/img/chifley-floorplan.jpg",
     // Names from the Library's group study room door signage. The Library
     // says Chifley has 15 bookable group rooms, but only these 10 names are
     // publicly verifiable (LibCal needs an ANU login). Capacity 6 is a
@@ -66,6 +70,7 @@ export const BUILDINGS: Building[] = [
     name: "Hancock Library",
     lngLat: [149.1177754, -35.2769518],
     image: "/img/hancock.jpg",
+    floorplan: "/img/hancock-floorplan.jpg",
     // From the Library's door signage, all on Level 3. Capacity 6 is a
     // placeholder.
     rooms: numberedRooms("hancock", "Group Study Room", 6, [
@@ -116,6 +121,7 @@ export const BUILDINGS: Building[] = [
     code: "Bldg 24",
     name: "Copland Building",
     lngLat: [149.1224446, -35.2778173],
+    image: "/img/copland.jpg",
     rooms: [
       { id: "copland-g30", name: "G30 Study Room", capacity: 12, status: "available", note: "Free now" },
       { id: "copland-g31", name: "G31 Study Room", capacity: 12, status: "busy", note: "Booked until 17:00" },
@@ -126,6 +132,8 @@ export const BUILDINGS: Building[] = [
     code: "Bldg 2",
     name: "R.G. Menzies Library",
     lngLat: [149.1181285, -35.2821554],
+    image: "/img/menzies.jpg",
+    floorplan: "/img/menzies-floorplan.jpg",
     // Placeholder room list; no public door-signage source found yet.
     rooms: [
       { id: "menzies-g01", name: "Group Study Room G01", capacity: 6, status: "available", note: "Free now" },
@@ -137,6 +145,7 @@ export const BUILDINGS: Building[] = [
     code: "Bldg 35",
     name: "Birch Building",
     lngLat: [149.1193497, -35.2743674],
+    image: "/img/birch.jpg",
     // Placeholder room list; no public door-signage source found yet.
     rooms: [
       { id: "birch-lt1", name: "Lecture Theatre 1", capacity: 80, status: "available", note: "Free now" },

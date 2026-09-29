@@ -202,8 +202,10 @@ a:hover {
 
 .marker-card-image {
   display: block;
+  width: 100%;
   aspect-ratio: 16 / 9;
   margin-bottom: 0.4rem;
+  object-fit: cover;
   background:
     linear-gradient(135deg, transparent 48%, var(--colour-border) 49%, var(--colour-border) 51%, transparent 52%),
     var(--colour-gold-tint);

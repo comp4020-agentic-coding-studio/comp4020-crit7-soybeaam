@@ -19,6 +19,8 @@ export interface Building {
   name: string;
   // GeoJSON [lng, lat]; only buildings with one get a marker on the map.
   lngLat?: [number, number];
+  // Path under public/ for the marker hover card photo; optional.
+  image?: string;
   rooms: Room[];
 }
 
@@ -49,6 +51,7 @@ export const BUILDINGS: Building[] = [
     code: "Bldg 15",
     name: "Chifley Library",
     lngLat: [149.1203952, -35.2779988],
+    image: "/img/chifley.jpg",
     // Names from the Library's group study room door signage. The Library
     // says Chifley has 15 bookable group rooms, but only these 10 names are
     // publicly verifiable (LibCal needs an ANU login). Capacity 6 is a
@@ -62,6 +65,7 @@ export const BUILDINGS: Building[] = [
     code: "Bldg 43",
     name: "Hancock Library",
     lngLat: [149.1177754, -35.2769518],
+    image: "/img/hancock.jpg",
     // From the Library's door signage, all on Level 3. Capacity 6 is a
     // placeholder.
     rooms: numberedRooms("hancock", "Group Study Room", 6, [
@@ -101,6 +105,7 @@ export const BUILDINGS: Building[] = [
     code: "Bldg 155",
     name: "Marie Reay Teaching Centre",
     lngLat: [149.1209577, -35.2776794],
+    image: "/img/marie-reay.jpg",
     // Capacity 30 is a placeholder.
     rooms: numberedRooms("marie-reay", "Room", 30, [
       "2.01", "2.02", "2.03", "2.04", "3.01", "3.02", "3.03", "3.04", "4.01", "4.02", "4.03", "4.04",

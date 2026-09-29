@@ -10,6 +10,7 @@ const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => ({
   name: b.name,
   code: b.code,
   lngLat: b.lngLat!,
+  image: b.image,
   total: b.rooms.length,
   available: b.rooms.filter((r) => roomStatusFor(r, now.date, now.time) === "available").length,
 }));
@@ -67,6 +68,7 @@ const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => ({
     name: string;
     code: string;
     lngLat: [number, number];
+    image?: string;
     total: number;
     available: number;
   }
@@ -116,8 +118,18 @@ const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => ({
 
       const card = el("span", "marker-card");
       card.setAttribute("aria-hidden", "true");
+      let image: HTMLElement;
+      if (m.image) {
+        const img = document.createElement("img");
+        img.className = "marker-card-image";
+        img.src = m.image;
+        img.alt = "";
+        image = img;
+      } else {
+        image = el("span", "marker-card-image");
+      }
       card.append(
-        el("span", "marker-card-image"),
+        image,
         el("span", "marker-card-name", m.name),
         el("span", "marker-card-meta", `${m.available} of ${m.total} rooms available`),
       );

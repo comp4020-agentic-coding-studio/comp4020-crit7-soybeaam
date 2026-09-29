@@ -55,10 +55,10 @@ const currentSlot = (now: ReturnType<typeof canberraNow>) => {
 const NOW = canberraNow();
 
 describe("campus map", () => {
-  it("has a marker for Chifley, Hancock and Marie Reay, each with a building page", async () => {
+  it("has a marker for each mapped building, each with a building page", async () => {
     const { markers } = await loadHome();
     const ids = markers.map((m) => m.id).sort();
-    expect(ids).toEqual(["chifley", "hancock", "marie-reay"]);
+    expect(ids).toEqual(["birch", "chifley", "copland", "hancock", "marie-reay", "menzies"]);
     for (const m of markers) {
       expect(m.lngLat).toHaveLength(2);
       const page = await fetch(new URL(`/building/${m.id}/`, baseUrl), { redirect: "manual" });

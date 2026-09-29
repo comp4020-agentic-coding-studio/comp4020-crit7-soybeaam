@@ -115,9 +115,32 @@ export const BUILDINGS: Building[] = [
     id: "copland",
     code: "Bldg 24",
     name: "Copland Building",
+    lngLat: [149.1224446, -35.2778173],
     rooms: [
       { id: "copland-g30", name: "G30 Study Room", capacity: 12, status: "available", note: "Free now" },
       { id: "copland-g31", name: "G31 Study Room", capacity: 12, status: "busy", note: "Booked until 17:00" },
+    ],
+  },
+  {
+    id: "menzies",
+    code: "Bldg 2",
+    name: "R.G. Menzies Library",
+    lngLat: [149.1181285, -35.2821554],
+    // Placeholder room list; no public door-signage source found yet.
+    rooms: [
+      { id: "menzies-g01", name: "Group Study Room G01", capacity: 6, status: "available", note: "Free now" },
+      { id: "menzies-g02", name: "Group Study Room G02", capacity: 6, status: "available", note: "Free now" },
+    ],
+  },
+  {
+    id: "birch",
+    code: "Bldg 35",
+    name: "Birch Building",
+    lngLat: [149.1193497, -35.2743674],
+    // Placeholder room list; no public door-signage source found yet.
+    rooms: [
+      { id: "birch-lt1", name: "Lecture Theatre 1", capacity: 80, status: "available", note: "Free now" },
+      { id: "birch-t101", name: "Tutorial Room 101", capacity: 20, status: "available", note: "Free now" },
     ],
   },
 ];

@@ -1,5 +1,6 @@
 ---
 import Layout from "../components/Layout.astro";
+import RoomAvailabilityPanel from "../components/RoomAvailabilityPanel.astro";
 import { BUILDINGS } from "../lib/campus";
 import { canberraNow, roomStatusFor } from "../lib/bookings";
 
@@ -17,8 +18,9 @@ const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => ({
 <Layout title="ANU Room Finder — Campus map">
   <h1>Find a study or tutorial room</h1>
   <p>
-    Hover a building on the map to see how many rooms are free right now, and
-    click it to view and book its rooms.
+    Hover a building on the map to see how many rooms are free right now.
+    Click a building, on the map or in the list below, to see its rooms and
+    book one.
   </p>
 
   <div
@@ -31,7 +33,7 @@ const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => ({
   </div>
 
   <div class="map-legend">
-    <span>Hover a marker for availability, click to view its rooms</span>
+    <span>Click a marker or building for its rooms and to book</span>
   </div>
 
   <ul class="card-list" style="margin-top: 2rem;">
@@ -42,11 +44,13 @@ const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => ({
             <div class="card-title">{b.name}</div>
             <div class="card-meta">{b.code} &middot; {b.rooms.length} rooms listed</div>
           </div>
-          <a href={`/building/${b.id}/`}>View rooms &rarr;</a>
+          <a href={`/building/${b.id}/`} data-building-id={b.id} data-building-name={b.name}>View rooms &rarr;</a>
         </li>
       ))
     }
   </ul>
+
+  <RoomAvailabilityPanel />
 </Layout>
 
 <script>
@@ -103,7 +107,12 @@ const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => ({
       const link = document.createElement("a");
       link.className = "map-marker";
       link.href = `/building/${m.id}/`;
-      link.setAttribute("aria-label", `${m.name}, ${m.available} of ${m.total} rooms available. View rooms`);
+      link.dataset.buildingId = m.id;
+      link.dataset.buildingName = m.name;
+      link.setAttribute(
+        "aria-label",
+        `${m.name}, ${m.available} of ${m.total} rooms available. Click to see its rooms and book`,
+      );
 
       const card = el("span", "marker-card");
       card.setAttribute("aria-hidden", "true");

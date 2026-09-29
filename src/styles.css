@@ -3,7 +3,9 @@
    Palette is ANU's brand set: black/white carry the page, gold tint is the
    only background tone, and ANU gold is a highlight used sparingly (nav
    accents, the selected day, focus) — never as a fill covering more than a small
-   fraction of any view. */
+   fraction of any view.
+   One deliberate exception: --colour-busy-accent is a non-brand blue used
+   only for the thin accent bars on the dark room panel. */
 :root {
   --colour-black: #000000;
   --colour-white: #ffffff;
@@ -19,6 +21,9 @@
   --colour-closed: #5a5a5a;
   --colour-closed-bg: #ececec;
   --colour-past-bg: #dcdcdc;
+  /* Accent for "booked now" in the room panel, where the red busy tone reads
+     as an error on a dark card. Only ever a thin bar, never text. */
+  --colour-busy-accent: #7b83eb;
 
   --radius: 0.5rem;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -559,4 +564,177 @@ button:hover {
   .room-name {
     white-space: normal;
   }
+}
+
+/* Room availability panel: slides in from the right over the page when a
+   building is picked on the home page. Dark card, one row per room, with a
+   left accent bar keyed to status (the status is also written out). */
+.room-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  width: min(24rem, 100vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  overflow-y: auto;
+  background: var(--colour-black);
+  color: var(--colour-white);
+  border-left: 3px solid var(--colour-gold);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.35);
+  animation: room-panel-in 0.2s ease-out;
+}
+
+.room-panel[hidden] {
+  display: none;
+}
+
+.room-panel:focus {
+  outline: none;
+}
+
+.room-panel:focus-visible {
+  outline: 3px solid var(--colour-gold);
+  outline-offset: -3px;
+}
+
+@keyframes room-panel-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-panel {
+    animation: none;
+  }
+}
+
+.room-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.room-panel-kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--colour-gold);
+}
+
+.room-panel-title {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  color: var(--colour-white);
+}
+
+.room-panel-close {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.4rem;
+  line-height: 1;
+  background: transparent;
+  color: var(--colour-white);
+  border: 1px solid var(--colour-unigrey);
+}
+
+.room-panel-close:hover,
+.room-panel-close:focus-visible {
+  background: var(--colour-gold);
+  color: var(--colour-black);
+}
+
+.room-panel-status {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.room-panel-status:empty {
+  display: none;
+}
+
+.room-panel-status.error {
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--radius);
+  color: var(--colour-busy);
+  background: var(--colour-busy-bg);
+}
+
+.room-panel-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.room-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--colour-unigrey);
+  border-left: 4px solid var(--colour-closed);
+  border-radius: var(--radius);
+}
+
+.room-row-available {
+  border-left-color: var(--colour-available);
+}
+
+.room-row-busy {
+  border-left-color: var(--colour-busy-accent);
+}
+
+.room-row-name {
+  font-weight: 600;
+  color: var(--colour-white);
+}
+
+.room-row-meta,
+.room-row-status {
+  font-size: 0.8rem;
+  color: var(--colour-white);
+}
+
+.room-row-status {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.room-row-icon {
+  display: inline-block;
+  width: 1rem;
+  text-align: center;
+}
+
+.room-panel-book {
+  margin-top: auto;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--colour-gold);
+  color: var(--colour-black);
+  border-radius: var(--radius);
+}
+
+.room-panel-book:hover,
+.room-panel-book:focus-visible {
+  background: var(--colour-white);
+  color: var(--colour-black);
 }

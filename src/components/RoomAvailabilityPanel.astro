@@ -30,12 +30,16 @@
 </aside>
 
 <script>
+  import { formatTime12 } from "../lib/time";
+
+  // One room as /api/rooms.json sends it (see roomLiveStatus in bookings.ts).
   interface PanelRoom {
     id: string;
     name: string;
     capacity: number;
-    note: string;
     status: "available" | "busy" | "closed";
+    until: string | null;
+    bookedBy: string | null;
   }
 
   const panel = document.getElementById("room-panel");
@@ -47,10 +51,19 @@
     const closeButton = panel.querySelector<HTMLButtonElement>(".room-panel-close")!;
 
     // Text plus an icon for each status, so colour is never the only cue.
-    const STATUS_TEXT: Record<string, { icon: string; text: string }> = {
-      available: { icon: "✓", text: "Available now" },
-      busy: { icon: "●", text: "Booked now" },
-      closed: { icon: "✕", text: "Closed, not bookable" },
+    const STATUS_ICON: Record<string, string> = { available: "✓", busy: "●", closed: "✕" };
+
+    const statusText = (room: PanelRoom): string => {
+      const until = room.until ? formatTime12(room.until) : null;
+      if (room.status === "available") return until ? `Available now · until ${until}` : "Available now";
+      if (room.status === "busy") {
+        const who = room.bookedBy ? `Booked by ${room.bookedBy}` : "Booked now";
+        return until ? `${who} · until ${until}` : who;
+      }
+      // Closed with an `until` means outside opening hours; without one the
+      // room isn't bookable at all.
+      if (room.status === "closed") return until ? `Closed now · opens ${until}` : "Closed, not bookable";
+      return "Status unknown";
     };
     const STATUS_RANK: Record<string, number> = { available: 0, busy: 1, closed: 2 };
 
@@ -66,16 +79,15 @@
     };
 
     const roomRow = (room: PanelRoom) => {
-      const known = STATUS_TEXT[room.status];
-      const info = known ?? { icon: "–", text: "Status unknown" };
+      const known = room.status in STATUS_ICON;
       const item = el("li", known ? `room-row room-row-${room.status}` : "room-row");
       const statusLine = el("span", "room-row-status");
-      const icon = el("span", "room-row-icon", info.icon);
+      const icon = el("span", "room-row-icon", STATUS_ICON[room.status] ?? "–");
       icon.setAttribute("aria-hidden", "true");
-      statusLine.append(icon, document.createTextNode(info.text));
+      statusLine.append(icon, document.createTextNode(statusText(room)));
       item.append(
         el("span", "room-row-name", room.name),
-        el("span", "room-row-meta", `Capacity ${room.capacity} · ${room.note}`),
+        el("span", "room-row-meta", `Capacity ${room.capacity}`),
         statusLine,
       );
       return item;
@@ -89,8 +101,11 @@
       status.textContent = "Loading rooms…";
       status.className = "room-panel-status";
       try {
+        // Fetched fresh on every open (no-store), so a booking made since
+        // shows up straight away.
         const res = await fetch(`/api/rooms.json?building=${encodeURIComponent(buildingId)}`, {
           signal: mine.signal,
+          cache: "no-store",
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as { rooms: PanelRoom[] };

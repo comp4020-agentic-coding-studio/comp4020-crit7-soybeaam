@@ -85,13 +85,41 @@ export function canberraNow(at: Date = new Date()): { date: string; time: string
   return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
 }
 
-// A room's live status for a given date/time instant: a booking covering
-// that instant makes it busy; otherwise it falls back to its static base
-// status from campus.ts (which only ever says "available" or "closed").
-export function roomStatusFor(room: Room, date: string, time: string): RoomStatus {
-  if (room.status === "closed") return "closed";
-  const busy = listBookingsForRoom(room.id, date).some((b) => b.startTime <= time && time < b.endTime);
-  return busy ? "busy" : "available";
+export interface LiveStatus {
+  status: RoomStatus;
+  // "HH:MM". Available: when the next booking starts, or CLOSE. Busy: when
+  // the room frees up (back-to-back bookings merged). Closed outside opening
+  // hours: OPEN. Closed for good (static "closed"): null.
+  until: string | null;
+  // Who holds the booking covering `time`; only set when busy.
+  bookedBy: string | null;
+}
+
+// What the home page says about a room at `time`: the panel row and the
+// marker counts both come from this, so they can't disagree. Pure over the
+// day's bookings (any list; it picks out this room's), so one
+// listBookingsForBuilding() call covers a whole building. A static "closed"
+// room stays closed, and outside opening hours every room counts as closed.
+export function roomLiveStatus(room: Room, bookingsForDay: Booking[], time: string): LiveStatus {
+  if (room.status === "closed") return { status: "closed", until: null, bookedBy: null };
+  if (time < OPEN || time >= CLOSE) return { status: "closed", until: OPEN, bookedBy: null };
+
+  const mine = bookingsForDay
+    .filter((b) => b.roomId === room.id)
+    .sort((a, b) => (a.startTime < b.startTime ? -1 : a.startTime > b.startTime ? 1 : 0));
+
+  const current = mine.find((b) => b.startTime <= time && time < b.endTime);
+  if (current) {
+    // Walk forward through bookings that start the moment the last one ends.
+    let until = current.endTime;
+    for (const b of mine) {
+      if (b.startTime <= until && b.endTime > until) until = b.endTime;
+    }
+    return { status: "busy", until, bookedBy: current.bookedBy };
+  }
+
+  const next = mine.find((b) => b.startTime > time);
+  return { status: "available", until: next ? next.startTime : CLOSE, bookedBy: null };
 }
 
 // "HH:MM" <-> minutes since midnight. Times are always zero-padded, so they

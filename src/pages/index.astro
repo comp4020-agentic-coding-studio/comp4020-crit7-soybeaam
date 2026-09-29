@@ -1,55 +1,73 @@
 ---
 import Layout from "../components/Layout.astro";
 import RoomAvailabilityPanel from "../components/RoomAvailabilityPanel.astro";
-import { BUILDINGS } from "../lib/campus";
-import { canberraNow, roomStatusFor } from "../lib/bookings";
+import { BUILDINGS, CLOSE, OPEN } from "../lib/campus";
+import { formatTime12 } from "../lib/time";
+import { canberraNow, listBookingsForBuilding, roomLiveStatus } from "../lib/bookings";
 
 const now = canberraNow();
-const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => ({
-  id: b.id,
-  name: b.name,
-  code: b.code,
-  lngLat: b.lngLat!,
-  image: b.image,
-  total: b.rooms.length,
-  available: b.rooms.filter((r) => roomStatusFor(r, now.date, now.time) === "available").length,
-}));
+// Counts come from the same helper as the room panel, so they agree.
+const markers = BUILDINGS.filter((b) => b.lngLat).map((b) => {
+  const dayBookings = listBookingsForBuilding(b.id, now.date);
+  return {
+    id: b.id,
+    name: b.name,
+    code: b.code,
+    lngLat: b.lngLat!,
+    image: b.image,
+    total: b.rooms.length,
+    available: b.rooms.filter((r) => roomLiveStatus(r, dayBookings, now.time).status === "available").length,
+  };
+});
 ---
 
-<Layout title="ANU Room Finder — Campus map">
-  <h1>Find a study or tutorial room</h1>
-  <p>
-    Hover a building on the map to see how many rooms are free right now.
-    Click a building, on the map or in the list below, to see its rooms and
-    book one.
-  </p>
-
-  <div
-    id="campus-map"
-    class="campus-map"
-    role="region"
-    aria-label="Map of ANU campus with building markers"
-    data-markers={JSON.stringify(markers)}
-  >
+<Layout title="ANU Room Finder — Campus map" fullBleed>
+  <h1 class="visually-hidden">Find a study or tutorial room</h1>
+  <div class="campus-map-frame">
+    <div
+      id="campus-map"
+      class="campus-map"
+      role="region"
+      aria-label="Map of ANU campus with building markers"
+      data-markers={JSON.stringify(markers)}
+    >
+    </div>
+    <!-- Outside #campus-map so MapLibre never touches it; plain HTML, so it shows without JS. -->
+    <div class="map-overlay">
+      <p class="map-overlay-tagline">Pick a building to see free rooms</p>
+      <a href="#help">Help and all buildings</a>
+    </div>
   </div>
 
-  <div class="map-legend">
-    <span>Click a marker or building for its rooms and to book</span>
-  </div>
-
-  <ul class="card-list" style="margin-top: 2rem;">
-    {
-      BUILDINGS.map((b) => (
-        <li class="card">
-          <div>
-            <div class="card-title">{b.name}</div>
-            <div class="card-meta">{b.code} &middot; {b.rooms.length} rooms listed</div>
-          </div>
-          <a href={`/building/${b.id}/`} data-building-id={b.id} data-building-name={b.name}>View rooms &rarr;</a>
-        </li>
-      ))
-    }
-  </ul>
+  <section id="help" class="map-help" aria-labelledby="help-title">
+    <h2 id="help-title">Help</h2>
+    <p>
+      The map shows campus buildings with bookable study and tutorial rooms.
+      Hover or focus a building's marker to see its name and how many of its
+      rooms are free right now.
+    </p>
+    <p>
+      Click a marker to open the room availability panel. It lists every room
+      in that building: free rooms show how long they stay free, and booked
+      rooms show who has them and until when. Press Escape or the close button
+      to shut it.
+    </p>
+    <p>
+      To book, use <strong>Schedule booking</strong> at the bottom of the
+      panel. It opens the building's full booking page, where you pick a day,
+      a room and a time. {`Rooms can be booked from ${formatTime12(OPEN)} to ${formatTime12(CLOSE)}, up to two weeks ahead.`}
+    </p>
+    <p>Some buildings aren't on the map yet. Every building is listed here:</p>
+    <ul class="building-links">
+      {
+        BUILDINGS.map((b) => (
+          <li>
+            <a href={`/building/${b.id}/`} data-building-id={b.id} data-building-name={b.name}>{b.name}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
 
   <RoomAvailabilityPanel />
 </Layout>

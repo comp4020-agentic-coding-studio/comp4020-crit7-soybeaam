@@ -26,6 +26,9 @@
   --colour-busy-accent: #7b83eb;
 
   --radius: 0.5rem;
+  /* The nav bar's fixed height, so the home map can fill exactly what's
+     left of the viewport below it. */
+  --nav-height: 3.3rem;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
@@ -48,6 +51,12 @@ main {
   padding: 1.5rem;
 }
 
+/* Home page: the map runs edge to edge, so main gives up its column. */
+main.full-bleed {
+  max-width: none;
+  padding: 0;
+}
+
 a {
   color: var(--colour-black);
 }
@@ -62,7 +71,10 @@ a:hover {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  padding: 0.75rem 1.5rem;
+  height: var(--nav-height);
+  padding: 0 1.5rem;
+  white-space: nowrap;
+  overflow-x: auto;
   background: var(--colour-black);
   border-bottom: 3px solid var(--colour-gold);
 }
@@ -82,55 +94,71 @@ a:hover {
   color: var(--colour-gold);
 }
 
-/* Card — used for room listings. Gold tint gives the surface a wash without
-   using gold itself as a fill. */
-.card {
-  background: var(--colour-gold-tint);
-  border: 1px solid var(--colour-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
-  padding: 1rem;
+/* Keeps all three links on one line (so the fixed height holds) down to
+   320px wide. */
+@media (max-width: 26rem) {
+  .site-nav {
+    gap: 1rem;
+    padding: 0 1rem;
+  }
 }
 
-.card-list {
-  list-style: none;
-  padding: 0;
-  margin: 1rem 0 0;
-  display: grid;
-  gap: 0.75rem;
-}
-
-.card-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.card-title {
-  font-weight: 600;
-  color: var(--colour-black);
-}
-
+/* Small grey meta line, e.g. the building code under a building page title. */
 .card-meta {
   font-size: 0.85rem;
   color: var(--colour-unigrey);
 }
 
-/* Campus map — MapLibre over self-hosted OSM tiles (public/maps/anu.pmtiles). */
+/* Campus map: MapLibre over self-hosted OSM tiles (public/maps/anu.pmtiles).
+   Fills the viewport below the nav; the help section sits under it. 100vh is
+   the fallback where dvh isn't supported. */
 .campus-map {
   width: 100%;
-  height: 28rem;
+  height: calc(100vh - var(--nav-height));
+  height: calc(100dvh - var(--nav-height));
   background: var(--colour-gold-tint);
-  border-radius: var(--radius);
-  border: 1px solid var(--colour-border);
   overflow: hidden;
 }
 
-@media (max-width: 40rem) {
-  .campus-map {
-    height: 20rem;
-  }
+/* Positioning context for the overlay card over the map. */
+.campus-map-frame {
+  position: relative;
+}
+
+/* Bottom-left card over the map: tells sighted users what to do and that the
+   Help section (and the buildings with no marker) sit below. Bottom-left is
+   clear of MapLibre's zoom buttons (top-right) and compact attribution
+   (bottom-right). z-index sits above MapLibre's controls (2) and below the
+   room panel (50). */
+.map-overlay {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 3;
+  max-width: calc(100% - 4rem);
+  padding: 0.5rem 0.75rem;
+  background: var(--colour-white);
+  border: 1px solid var(--colour-border);
+  border-left: 3px solid var(--colour-gold);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.map-overlay-tagline {
+  margin: 0 0 0.2rem;
+  font-weight: 600;
+  color: var(--colour-black);
+}
+
+.map-overlay a {
+  font-weight: 600;
+}
+
+.map-overlay a:focus-visible {
+  outline: 3px solid var(--colour-gold);
+  outline-offset: 2px;
 }
 
 /* Building marker. MapLibre positions .map-marker with an inline transform,
@@ -224,13 +252,22 @@ a:hover {
   color: var(--colour-available);
 }
 
-.map-legend {
+/* Help section under the full-width map; keeps a readable column. */
+.map-help {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Plain text links to every building page, including the ones with no map
+   marker. Also the no-JS way to reach each building. */
+.building-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
-  color: var(--colour-unigrey);
+  gap: 0.25rem 1.25rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .back-link {

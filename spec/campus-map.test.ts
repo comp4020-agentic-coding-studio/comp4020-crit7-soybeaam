@@ -1,10 +1,10 @@
 import { JSDOM } from "jsdom";
 import { describe, expect, inject, it } from "vitest";
 
-// The homepage map's promises: markers for the three mapped buildings that
-// link to their building pages, availability counts that reflect live
-// bookings, and tiles served by this app (range requests included) rather
-// than a third-party tile service.
+// The homepage map's promises: markers for the mapped buildings that link to
+// their building pages, availability counts that reflect live bookings and
+// match the room panel, a Help section below the map, and tiles served by
+// this app (range requests included) rather than a third-party tile service.
 const baseUrl = inject("baseUrl");
 
 interface MarkerData {
@@ -64,6 +64,39 @@ describe("campus map", () => {
       const page = await fetch(new URL(`/building/${m.id}/`, baseUrl), { redirect: "manual" });
       expect(page.status, `/building/${m.id}/`).toBe(200);
     }
+  });
+
+  it("puts one Help section after the map, with the building links in it", async () => {
+    const { doc } = await loadHome();
+    const help = doc.getElementById("help");
+    expect(help, "expected a #help section on /").not.toBeNull();
+    expect(help!.querySelector("h2")?.textContent?.trim()).toBe("Help");
+    const map = doc.getElementById("campus-map")!;
+    // DOCUMENT_POSITION_FOLLOWING: the help section comes after the map.
+    expect(map.compareDocumentPosition(help!) & 4).toBeTruthy();
+    expect(help!.querySelectorAll(".building-links a").length).toBeGreaterThan(0);
+    expect(doc.querySelector(".map-legend"), "legend copy now lives in Help").toBeNull();
+  });
+
+  // The full-screen map hides the Help section below the fold, so a plain
+  // link over the map points to it (works without scripts).
+  it("links to the Help section from over the map", async () => {
+    const { doc } = await loadHome();
+    const link = doc.querySelector<HTMLAnchorElement>('.map-overlay a[href="#help"]');
+    expect(link, "expected a #help link in the map overlay").not.toBeNull();
+    expect(link!.textContent?.trim()).toBeTruthy();
+    expect(doc.querySelector("h1")?.classList.contains("visually-hidden")).toBe(true);
+  });
+
+  // The hover card and the room panel must tell the same story. Birch, as no
+  // spec books there, so nothing shifts between the two requests.
+  it("gives each marker the same free-room count as the room panel's API", async () => {
+    const marker = (await loadHome()).markers.find((m) => m.id === "birch")!;
+    const { rooms } = (await (await fetch(new URL("/api/rooms.json?building=birch", baseUrl))).json()) as {
+      rooms: { status: string }[];
+    };
+    expect(marker.total).toBe(rooms.length);
+    expect(marker.available).toBe(rooms.filter((r) => r.status === "available").length);
   });
 
   it("serves the map tiles itself, with range request support", async () => {

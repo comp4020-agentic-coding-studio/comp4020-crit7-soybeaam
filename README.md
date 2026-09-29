@@ -17,9 +17,9 @@ campus data (`campus.ts`) from live booking state (`schema.ts`/`bookings.ts`)
 before deciding how far to take it. The core decision was to keep "room data"
 and "booking data" separate: buildings, rooms, and their base status
 (available/closed) are fixed data describing the campus, while bookings are
-the only thing that changes a room's live status to busy. `roomStatusFor` in
-`src/lib/bookings.ts` is the single place that merges the two, so the map,
-the building page, and the booking panel all agree on what "available" means
+the only thing that changes a room's live status to busy. `roomLiveStatus` in
+`src/lib/bookings.ts` is the single place that merges the two, so the map
+markers and the room panel all agree on what "available" means
 at a given date and time.
 
 We chose to make the booking panel work both with and without JavaScript:
